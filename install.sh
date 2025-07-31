@@ -3,7 +3,7 @@
 # =================================================================
 # SKRIP INSTALLER BOT TELEGRAM SRPCOM STORE (VERSI GITHUB)
 # Dibuat oleh Gemini
-# Versi: 3.0 (Mengunduh langsung dari repositori GitHub)
+# Versi: 3.1 (Peningkatan Keandalan Instalasi & Logging)
 # =================================================================
 
 # --- Warna untuk Output ---
@@ -104,14 +104,28 @@ EOF
 log_info "Membuat virtual environment dan menginstal library yang dibutuhkan..."
 python3 -m venv "$VENV_DIR"
 source "$VENV_DIR/bin/activate"
-pip install --upgrade pip > /dev/null 2>&1
-pip install -r "$BOT_DIR/requirements.txt" > /dev/null 2>&1
+pip install --upgrade pip
+log_info "Memulai instalasi library dari requirements.txt..."
+pip install -r "$BOT_DIR/requirements.txt"
+
+# --- PERBAIKAN: Menambahkan pengecekan error setelah pip install ---
+if [ $? -ne 0 ]; then
+    log_error "Gagal menginstal library Python. Silakan periksa error di atas."
+    log_error "Instalasi dibatalkan."
+    deactivate
+    exit 1
+fi
+
 deactivate
 log_info "Library Python berhasil diinstal."
 
 # 7. Membuat Service systemd
 log_info "Membuat service systemd ($SERVICE_NAME.service) agar bot berjalan otomatis..."
 CURRENT_USER=$(logname)
+# Fallback jika logname gagal (misalnya di beberapa shell non-interaktif)
+if [ -z "$CURRENT_USER" ]; then
+    CURRENT_USER=$(who | awk '{print $1}')
+fi
 CURRENT_GROUP=$(id -gn "$CURRENT_USER")
 cat << EOF > "/etc/systemd/system/$SERVICE_NAME.service"
 [Unit]
