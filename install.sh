@@ -3,7 +3,7 @@
 # =================================================================
 # SKRIP INSTALLER BOT TELEGRAM SRPCOM STORE (VERSI GITHUB)
 # Dibuat oleh Gemini
-# Versi: 3.1 (Peningkatan Keandalan Instalasi & Logging)
+# Versi: 3.2 (Instalasi Sederhana)
 # =================================================================
 
 # --- Warna untuk Output ---
@@ -53,18 +53,13 @@ if [ -d "$BOT_DIR" ]; then
     rm -rf "$BOT_DIR"
 fi
 
-# 2. Meminta Input Konfigurasi dari Pengguna
-log_info "Silakan masukkan detail konfigurasi bot Anda."
+# 2. Meminta Input Konfigurasi dari Pengguna (Disederhanakan)
+log_info "Silakan masukkan Token Bot Telegram Anda."
 read -p "$(echo -e ${YELLOW}"Masukkan Token Bot Telegram Anda: "${NC})" BOT_TOKEN
-read -p "$(echo -e ${YELLOW}"Masukkan ID Admin Utama (numerik): "${NC})" ADMIN_ID
-read -p "$(echo -e ${YELLOW}"Masukkan API Key Tripay Anda: "${NC})" TRIPAY_API_KEY
-read -p "$(echo -e ${YELLOW}"Masukkan Private Key Tripay Anda: "${NC})" TRIPAY_PRIVATE_KEY
-read -p "$(echo -e ${YELLOW}"Masukkan Kode Merchant Tripay Anda: "${NC})" TRIPAY_MERCHANT_CODE
-read -p "$(echo -e ${YELLOW}"Masukkan Port untuk Webhook Callback (contoh: 8443): "${NC})" CALLBACK_PORT
 
 # Validasi input
-if [ -z "$BOT_TOKEN" ] || [ -z "$ADMIN_ID" ] || [ -z "$TRIPAY_API_KEY" ] || [ -z "$TRIPAY_PRIVATE_KEY" ] || [ -z "$TRIPAY_MERCHANT_CODE" ] || [ -z "$CALLBACK_PORT" ]; then
-    log_error "Semua kolom konfigurasi harus diisi. Instalasi dibatalkan."
+if [ -z "$BOT_TOKEN" ]; then
+    log_error "Token Bot tidak boleh kosong. Instalasi dibatalkan."
     exit 1
 fi
 
@@ -83,21 +78,21 @@ if [ $? -ne 0 ]; then
 fi
 log_info "File bot berhasil diunduh ke $BOT_DIR."
 
-# 5. Membuat File Konfigurasi (config.ini)
-log_info "Membuat file konfigurasi config.ini..."
+# 5. Membuat File Konfigurasi (config.ini) dengan Placeholder
+log_info "Membuat file konfigurasi config.ini dengan placeholder..."
 cat << EOF > "$BOT_DIR/config.ini"
 [telegram]
 token = $BOT_TOKEN
-admin_id = $ADMIN_ID
+admin_id = GANTI_DENGAN_ID_ADMIN_ANDA
 
 [tripay]
-api_key = $TRIPAY_API_KEY
-private_key = $TRIPAY_PRIVATE_KEY
-merchant_code = $TRIPAY_MERCHANT_CODE
+api_key = GANTI_DENGAN_API_KEY_TRIPAY
+private_key = GANTI_DENGAN_PRIVATE_KEY_TRIPAY
+merchant_code = GANTI_DENGAN_KODE_MERCHANT_TRIPAY
 
 [webhook]
 listen_ip = 0.0.0.0
-port = $CALLBACK_PORT
+port = 8443
 EOF
 
 # 6. Membuat Virtual Environment dan Menginstal Library Python
@@ -108,7 +103,6 @@ pip install --upgrade pip
 log_info "Memulai instalasi library dari requirements.txt..."
 pip install -r "$BOT_DIR/requirements.txt"
 
-# --- PERBAIKAN: Menambahkan pengecekan error setelah pip install ---
 if [ $? -ne 0 ]; then
     log_error "Gagal menginstal library Python. Silakan periksa error di atas."
     log_error "Instalasi dibatalkan."
@@ -122,7 +116,6 @@ log_info "Library Python berhasil diinstal."
 # 7. Membuat Service systemd
 log_info "Membuat service systemd ($SERVICE_NAME.service) agar bot berjalan otomatis..."
 CURRENT_USER=$(logname)
-# Fallback jika logname gagal (misalnya di beberapa shell non-interaktif)
 if [ -z "$CURRENT_USER" ]; then
     CURRENT_USER=$(who | awk '{print $1}')
 fi
@@ -152,10 +145,11 @@ systemctl enable "$SERVICE_NAME"
 # --- Selesai ---
 log_info "========================================================"
 log_info "INSTALASI SELESAI!"
-log_warn "LANGKAH SELANJUTNYA:"
-log_warn "1. Bot sudah siap dijalankan."
-log_warn "2. Jalankan bot dengan perintah: sudo systemctl start $SERVICE_NAME"
-log_warn "3. Cek status bot dengan: sudo systemctl status $SERVICE_NAME"
-log_warn "4. Untuk melihat log real-time: journalctl -u $SERVICE_NAME -f"
-log_warn "PENTING: Pastikan port $CALLBACK_PORT terbuka di firewall VPS Anda."
+log_warn "LANGKAH SELANJUTNYA (WAJIB):"
+log_warn "1. Edit file konfigurasi untuk memasukkan detail Anda."
+log_warn "   Jalankan: nano $BOT_DIR/config.ini"
+log_warn "2. Ganti semua nilai 'GANTI_DENGAN_...' dengan nilai Anda yang sebenarnya."
+log_warn "3. Simpan file (Ctrl+X, lalu Y, lalu Enter)."
+log_warn "4. Setelah konfigurasi selesai, jalankan bot dengan: sudo systemctl start $SERVICE_NAME"
+log_warn "5. Cek status bot dengan: sudo systemctl status $SERVICE_NAME"
 log_info "========================================================"
