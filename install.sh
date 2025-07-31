@@ -2,7 +2,6 @@
 
 # =================================================================
 # SKRIP INSTALLER BOT TELEGRAM SRPCOM STORE (VERSI GITHUB)
-# Dibuat oleh Gemini
 # Versi: 3.2 (Instalasi Sederhana)
 # =================================================================
 
